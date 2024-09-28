@@ -5,6 +5,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import ErrorHandler from "./utils/ErrorHandler";
 import { ErrorMiddleware } from "./middleware/error";
+import userRouter from "./routes/user.route";
 
 
 
@@ -19,6 +20,9 @@ app.use(cookieParser());
 app.use(cors({
     origin:process.env.ORIGIN
 }));
+
+// router 
+app.use("/api/v1",userRouter)
 
 // testing API
 
