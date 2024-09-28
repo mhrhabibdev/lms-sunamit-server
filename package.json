@@ -5,9 +5,7 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-  "dev": "ts-node-dev --respawn --transpile-only server.ts"
-
-
+    "dev": "ts-node-dev --respawn --transpile-only server.ts"
   },
   "author": "habibur rahman habib",
   "license": "ISC",
@@ -22,11 +20,17 @@
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
+    "ejs": "^3.1.10",
     "express": "^4.21.0",
     "ioredis": "^5.4.1",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.6.3",
+    "nodemailer": "^6.9.15",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.6.2"
+  },
+  "devDependencies": {
+    "@types/ejs": "^3.1.5",
+    "@types/nodemailer": "^6.4.16"
   }
 }
