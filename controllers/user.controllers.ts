@@ -5,7 +5,8 @@ import ErrorHandler from "../utils/ErrorHandler";
 import jwt, { Secret } from "jsonwebtoken";
 import ejs from "ejs";
 import path from "path";
-import { sendMail } from "../utils/sendMail";
+import sendMail from "../utils/sendMail";
+// import pt from  "../mails/activation-mail.ejs"
 
 // Register User Interface
 interface IRegistrationBody {
@@ -45,17 +46,14 @@ export const registrationUser = async (req: Request, res: Response, next: NextFu
     const data = { user: { name: user.name }, activationCode };
 
     // Render the activation email template using EJS
-    const html = await ejs.renderFile(
-      path.join(__dirname, "../mails/activation-mail.ejs"),
-      data
-    );
-
+    // const data = {user: {name:user.name}, activationCode);
+    const html = await ejs.renderFile(path.join(__dirname, "../mails/activation-mail.ejs"),data);
     // Send activation email
     try {
       await sendMail({
         email: user.email,
         subject: "Activate your account",
-        template: html, // Rendered HTML content
+        template: "activation-mail.ejs",
         data,
       });
 
@@ -66,7 +64,7 @@ export const registrationUser = async (req: Request, res: Response, next: NextFu
         activationToken: activationToken.token,
       });
     } catch (emailError: any) {
-      return next(new ErrorHandler(`Email could not be sent: ${emailError.message}`, 500));
+      return next(new ErrorHandler(`Email could not be sent: ${emailError.message}`, 400));
     }
 
   } catch (error: any) {
