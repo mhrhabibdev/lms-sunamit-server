@@ -116,7 +116,7 @@ export const activateUser = async (req: Request, res: Response, next: NextFuncti
     // Check if the email already exists in the database
     const existUser = await UserModel.findOne({ email });
     if (existUser) {
-      return next(new ErrorHandler("Email already exists", 400));
+      return next(new ErrorHandler("Email already exist", 400));
     }
 
     // Create a new user
