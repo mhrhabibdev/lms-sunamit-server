@@ -32,3 +32,14 @@ export const isAuthenticated = async (req: Request, res: Response, next: NextFun
   req.user = JSON.parse(user);
   next();
 };
+
+// Validate user role
+export const authorizeRoles = (...roles: string[]) => {
+    return (req: Request, res: Response, next: NextFunction) => {
+      // Check if the user's role is included in the allowed roles
+      if (!roles.includes(req.user?.role || '')) {
+        return next(new ErrorHandler(`Role: ${req.user?.role} is not allowed to access this resource`, 403));
+      }
+      next();
+    };
+  };

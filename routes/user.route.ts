@@ -2,7 +2,7 @@
 
 import express from "express";
 import { activateUser, loginUser, logoutUser, registrationUser } from "../controllers/user.controllers"; // Named import for the registrationUser
-import { isAuthenticated } from "../models/auth";
+import { authorizeRoles, isAuthenticated } from "../models/auth";
 
 const userRouter = express.Router();
 
