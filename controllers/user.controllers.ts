@@ -8,6 +8,7 @@ import path from "path";
 import sendMail from "../utils/sendMail";
 import { catchAsyncError } from "../middleware/catchAsyncErrors";
 import { sendToken } from "../utils/jwt";
+import { redis } from "../utils/redis";
 
 // Register User Interface
 interface IRegistrationBody {
@@ -171,6 +172,10 @@ export const logoutUser =
       // Clear cookies by setting maxAge to 1 millisecond
       res.cookie("access_token", "", { maxAge: 1 });
       res.cookie("refresh_token", "", { maxAge: 1 });
+
+      const userId = req.user?._id || '';
+
+    redis.del(userId)
       
       res.status(200).json({
         success: true,

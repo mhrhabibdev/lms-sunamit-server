@@ -1,10 +1,10 @@
 import { Request, Response, NextFunction } from "express";
-import { catchAsyncError } from "./catchAsyncErrors"; // Fix the import to start with a lowercase 'c'
 import ErrorHandler from "../utils/ErrorHandler";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { redis } from "../utils/redis";
 
-export const isAuthenticated = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+
+export const isAuthenticated = async (req: Request, res: Response, next: NextFunction) => {
   const access_token = req.cookies.access_token as string;
 
   // Check if access_token is present
@@ -31,4 +31,4 @@ export const isAuthenticated = catchAsyncError(async (req: Request, res: Respons
   // Attach user information to the request object
   req.user = JSON.parse(user);
   next();
-});
+};
