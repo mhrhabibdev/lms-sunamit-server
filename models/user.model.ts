@@ -1,5 +1,7 @@
+require("dotenv").config();
 import mongoose, { Document, Model } from "mongoose";
 import bcrypt from "bcryptjs";
+import Jwt  from "jsonwebtoken";
 
 // Email Regex Pattern
 const emailRegexPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -17,6 +19,8 @@ export interface IUser extends Document {
   isVerified: boolean;
   courses: Array<{ courseId: string }>;
   comparePassword: (password: string) => Promise<boolean>;
+  SignAccessToken:()=>string;
+  SignRefreshToken:()=>string;
 }
 
 // Mongoose schema definition
