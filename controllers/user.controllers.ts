@@ -163,3 +163,22 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
     return next(new ErrorHandler(error.message, 400));
   }
 };
+
+// Logout user
+export const logoutUser = 
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // Clear cookies by setting maxAge to 1 millisecond
+      res.cookie("access_token", "", { maxAge: 1 });
+      res.cookie("refresh_token", "", { maxAge: 1 });
+      
+      res.status(200).json({
+        success: true,
+        message: "Logged out successfully",
+      });
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 400));
+    }
+  }
+;
+
