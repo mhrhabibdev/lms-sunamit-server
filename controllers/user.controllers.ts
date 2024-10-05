@@ -2,13 +2,14 @@ require("dotenv").config();
 import { Request, Response, NextFunction } from "express";
 import UserModel from "../models/user.model";
 import ErrorHandler from "../utils/ErrorHandler";
-import jwt, { Secret } from "jsonwebtoken";
+import jwt, { JwtPayload, Secret } from "jsonwebtoken";
 import ejs from "ejs";
 import path from "path";
 import sendMail from "../utils/sendMail";
 import { catchAsyncError } from "../middleware/catchAsyncErrors";
-import { sendToken } from "../utils/jwt";
+import { accessTokenOptions, refreshTokenOptions, sendToken } from "../utils/jwt";
 import { redis } from "../utils/redis";
+import { getUserById } from "../services/user.services";
 
 // Register User Interface
 interface IRegistrationBody {
@@ -185,5 +186,99 @@ export const logoutUser =
       return next(new ErrorHandler(error.message, 400));
     }
   };
+
+
+// update access token
+export const updateAccessToken = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const refresh_token = req.cookies.refresh_token as string;
+
+    // Verify the refresh token
+    const decoded = jwt.verify(refresh_token, process.env.REFRESH_TOKEN as string) as JwtPayload;
+    const message = 'Could not refresh token';
+
+    if (!decoded) {
+      return next(new ErrorHandler(message, 400));
+    }
+
+    // Get session from Redis
+    const session = await redis.get(decoded.id as string);
+    if (!session) {
+      return next(new ErrorHandler(message, 400));
+    }
+
+    const user = JSON.parse(session);
+
+    const accessToken = jwt.sign(
+      { id: user._id },
+      process.env.ACCESS_TOKEN as string,  // Use ACCESS_TOKEN_SECRET
+      {
+        expiresIn: "5m",
+      }
+    );
+    
+    const refreshToken = jwt.sign(
+      { id: user._id },
+      process.env.REFRESH_TOKEN as string,  // Use REFRESH_TOKEN_SECRET
+      {
+        expiresIn: "3d",
+      }
+    );
+    
+    // Set cookies for access token and refresh token
+    res.cookie("access_token", accessToken, accessTokenOptions);
+    res.cookie("refresh_token", refreshToken, refreshTokenOptions);
+    
+    // Send success response with access token
+    res.status(200).json({
+      status: "success",
+      accessToken,
+    });
+    
+  } catch (error: any) {
+    return next(new ErrorHandler(error.message, 400));
+  }
+};
+
+// get user info
+export const getUserInfo = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user?._id as string;
+
+    // Assuming getUserById is a function that fetches user data by userId
+    await getUserById(userId, res);
+    
+  } catch (error: any) {
+    return next(new ErrorHandler(error.message, 400));
+  }
+};
+
+interface ISocialAuthBody {
+  email: string;
+  name: string;
+  avatar: string;
+}
+
+// Social auth
+export const socialAuth = 
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { email, name, avatar } = req.body as ISocialAuthBody;
+      const user = await UserModel.findOne({ email });
+
+      if (!user) {
+        const newUser = await UserModel.create({ email, name, avatar });
+        sendToken(newUser, 200, res);
+      } else {
+        sendToken(user, 200, res);
+      }
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 400));
+    }
+  }
+;
+
+
+
 
 

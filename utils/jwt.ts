@@ -4,12 +4,35 @@ import { Response } from "express";
 import { redis } from "./redis";
 
 interface ITokenOptions {
-    expires: Date;
-    maxAge: number;
-    httpOnly: boolean;
-    sameSite: 'lax' | 'strict' | 'none' | undefined;
-    secure?: boolean;
-  }
+  expires: Date;
+  maxAge: number;
+  httpOnly: boolean;
+  sameSite: 'lax' | 'strict' | 'none' | undefined;
+  secure?: boolean;
+}
+
+// Parse environment variables to integrate with fallback values
+const accessTokenExpire = parseInt(process.env.ACCESS_TOKEN_EXPIRE || '300', 10);
+const refreshTokenExpire = parseInt(process.env.REFRESH_TOKEN_EXPIRE || '1200', 10); // Fixed variable name
+
+// Options for cookies
+export const accessTokenOptions: ITokenOptions = {
+  expires: new Date(Date.now() + accessTokenExpire* 60 * 60 * 1000), // Fixed multiplication operator
+  maxAge: accessTokenExpire * 60 * 60 * 1000, // Fixed multiplication operator
+  httpOnly: true,
+  sameSite: 'lax',
+//   secure: process.env.NODE_ENV === 'production', // Set secure to true in production
+};
+
+export const refreshTokenOptions: ITokenOptions = {
+  expires: new Date(Date.now() + refreshTokenExpire * 24 * 60 * 60 * 1000), // Fixed multiplication operator
+  maxAge: refreshTokenExpire * 24 * 60 * 60 * 1000, // Fixed multiplication operator
+  httpOnly: true,
+  sameSite: 'lax',
+//   secure: process.env.NODE_ENV === 'production', // Set secure to true in production
+};
+
+
   
   export const sendToken = (user: IUser, statusCode: number, res: Response) => {
     const accessToken = user.SignAccessToken();
@@ -22,27 +45,6 @@ interface ITokenOptions {
 redis.set(String(user._id), JSON.stringify(user));
 
 
-  
-    // Parse environment variables to integrate with fallback values
-    const accessTokenExpire = parseInt(process.env.ACCESS_TOKEN_EXPIRE || '300', 10);
-    const refreshTokenExpire = parseInt(process.env.REFRESH_TOKEN_EXPIRE || '1200', 10); // Fixed variable name
-  
-    // Options for cookies
-    const accessTokenOptions: ITokenOptions = {
-      expires: new Date(Date.now() + accessTokenExpire * 1000), // Fixed multiplication operator
-      maxAge: accessTokenExpire * 1000, // Fixed multiplication operator
-      httpOnly: true,
-      sameSite: 'lax',
-    //   secure: process.env.NODE_ENV === 'production', // Set secure to true in production
-    };
-  
-    const refreshTokenOptions: ITokenOptions = {
-      expires: new Date(Date.now() + refreshTokenExpire * 1000), // Fixed multiplication operator
-      maxAge: refreshTokenExpire * 1000, // Fixed multiplication operator
-      httpOnly: true,
-      sameSite: 'lax',
-    //   secure: process.env.NODE_ENV === 'production', // Set secure to true in production
-    };
   
 // Only set secure to true in production
 if (process.env.NODE_ENV === 'production') {  // Fixed comparison operator
