@@ -172,10 +172,11 @@ export const logoutUser =
       // Clear cookies by setting maxAge to 1 millisecond
       res.cookie("access_token", "", { maxAge: 1 });
       res.cookie("refresh_token", "", { maxAge: 1 });
-
-      const userId  = req.user?._id || '';
-      redis.del(userId)
       
+        redis.del(req.user?._id || '' as any)
+      
+
+      // Send success response
       res.status(200).json({
         success: true,
         message: "Logged out successfully",
@@ -183,8 +184,6 @@ export const logoutUser =
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 400));
     }
-  }
-;
-
+  };
 
 
