@@ -1,3 +1,4 @@
+
 require("dotenv").config();
 import { Request, Response, NextFunction } from "express";
 import UserModel from "../models/user.model";
@@ -10,6 +11,7 @@ import { catchAsyncError } from "../middleware/catchAsyncErrors";
 import { accessTokenOptions, refreshTokenOptions, sendToken } from "../utils/jwt";
 import { redis } from "../utils/redis";
 import { getUserById } from "../services/user.services";
+import cloudinary from "cloudinary"
 
 // Register User Interface
 interface IRegistrationBody {
@@ -319,6 +321,100 @@ export const updateUserInfo =
   }
 ;
 
+// Interface for password update request
+interface IUpdatePassword {
+  oldPassword: string;
+  newPassword: string;
+}
+
+export const updatePassword = 
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { oldPassword, newPassword } = req.body as IUpdatePassword;
+
+      // Ensure both old and new passwords are provided
+      if (!oldPassword || !newPassword) {
+        return next(new ErrorHandler("Please enter both old and new passwords", 400));
+      }
+
+      // Find the user by ID and explicitly include the password field
+      const user = await UserModel.findById(req.user?._id).select("+password");
+
+      // Check if the user exists and has a password
+      if (!user || user.password === undefined) {
+        return next(new ErrorHandler("User not found or invalid", 400));
+      }
+
+      // Compare the provided old password with the current password
+      const isPasswordMatch = await user.comparePassword(oldPassword);
+      if (!isPasswordMatch) {
+        return next(new ErrorHandler("Old password is incorrect", 400));
+      }
+
+      // Set the new password and save the user
+      user.password = newPassword;
+      await user.save();
+
+      // Store updated session in Redis, ensuring _id is a string
+      if (req.user && req.user._id) {
+        await redis.set(String(req.user._id), JSON.stringify(user));
+      } else {
+        return next(new ErrorHandler("User ID is missing", 400));
+      }
+
+      // Return success response
+      res.status(201).json({
+        success: true,
+        message: "Password updated successfully",
+        user,
+      });
+
+    } catch (error: any) {
+      // Handle any errors during the process
+      return next(new ErrorHandler(error.message, 400));
+    }
+  };
+
+// Update profile picture with IUpdateProfilePicture interface
+interface IUpdateProfilePicture {
+  avatar: string;
+}
+
+// update profile picture
+export const  updateProfilePicture  = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { avatar } = req.body;
+      const userId : any = req.user?._id;
+      const user = await UserModel.findById(userId);
+      if (avatar && user) {
+        // if user has one avatar then call this if
+        if (user?.avatar?.public_id) {
+          // first delete the old image
+          await cloudinary.v2.uploader.destroy(user?.avatar?.public_id);
+        }
+
+        const myCloud = await cloudinary.v2.uploader.upload(avatar, {
+          folder: "avatars",
+          width: 150,
+        });
+
+        user.avatar = {
+          public_id: myCloud.public_id,
+          url: myCloud.secure_url,
+        };
+
+        await user.save();
+        await redis.set(userId, JSON.stringify(user));
+        res.status(200).json({
+          success: true,
+          user,
+        });
+      }
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 400));
+    }
+  }
+;
 
 
 
