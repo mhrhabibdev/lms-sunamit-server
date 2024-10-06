@@ -224,6 +224,8 @@ export const updateAccessToken = async (req: Request, res: Response, next: NextF
         expiresIn: "3d",
       }
     );
+
+    req.user=user;
     
     // Set cookies for access token and refresh token
     res.cookie("access_token", accessToken, accessTokenOptions);
