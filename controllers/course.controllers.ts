@@ -3,6 +3,7 @@ import ErrorHandler from "../utils/ErrorHandler";
 import cloudinary from "cloudinary";
 import { createCourse } from "../services/course.service";
 
+
 // Upload course
 export const uploadCourse = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -20,7 +21,7 @@ export const uploadCourse = async (req: Request, res: Response, next: NextFuncti
       };
     }
 
-    await createCourse(data, res, next);
+    await createCourse(data, res);
   } catch (error: any) {
     return next(new ErrorHandler(error.message, 500));
   }
