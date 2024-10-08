@@ -3,6 +3,7 @@ import mongoose, { Document, Model, Schema } from "mongoose";
 interface IComment extends Document {
   user: object;
   comment: string;
+  commentReplies?: IComment[];
 }
 
 interface IReview extends Document {
@@ -67,7 +68,7 @@ interface ICourse extends Document {
   const commentSchema = new Schema<IComment>({
     user: Object,
     comment: String,
-    // commentReplies: [{ type: Schema.Types.ObjectId, ref: 'Comment' }],
+    commentReplies: [Object]
   });
   
   const courseDataSchema = new Schema<ICourseData>({
@@ -82,4 +83,7 @@ interface ICourse extends Document {
     suggestion: String,
     questions: [commentSchema],
   });
+
+
+  
   
