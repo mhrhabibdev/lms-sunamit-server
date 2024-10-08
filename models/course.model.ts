@@ -63,3 +63,23 @@ interface ICourse extends Document {
     title: String,
     url: String,
   });
+
+  const commentSchema = new Schema<IComment>({
+    user: Object,
+    comment: String,
+    // commentReplies: [{ type: Schema.Types.ObjectId, ref: 'Comment' }],
+  });
+  
+  const courseDataSchema = new Schema<ICourseData>({
+    videoUrl: String,
+    videoThumbnail: Object, // corrected the typo
+    title: String,
+    videoSection: String,
+    description: String,
+    videoLength: Number,
+    videoPlayer: String,
+    links: [linkSchema],
+    suggestion: String,
+    questions: [commentSchema],
+  });
+  
