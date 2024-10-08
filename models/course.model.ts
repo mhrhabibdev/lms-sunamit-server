@@ -85,5 +85,59 @@ interface ICourse extends Document {
   });
 
 
+  const courseSchema = new Schema<ICourse>({
+    name: {
+      type: String,
+      required: true,
+    },
+    description: {
+      type: String,
+      required: true,
+    },
+    price: {
+      type: Number,
+      required: true,
+    },
+    estimatedPrice: {
+      type: Number,
+    },
+    thumbnail: {
+      public_id: {
+        required: true,
+        type: String,
+      },
+      url: {
+        required: true,
+        type: String,
+      },
+    },
+    tags: {
+      type: String,
+      required: true,
+    },
+    level: {
+      type: String,
+      required: true,
+    },
+    demoUrl: {
+      type: String,
+      required: true,
+    },
+    benefits: [{ title: String }],
+    prerequisites: [{ title: String }],
+    reviews: [reviewSchema],
+    courseData: [courseDataSchema], // Corrected this line, changed to array notation
+    ratings: {
+      type: Number,
+      default: 0,
+    },
+    purchased: {
+      type: Number,
+      default: 0,
+    },
+  });
+  
+  const CourseModel: Model<ICourse> = mongoose.model("Course", courseSchema);
+  export default CourseModel;
   
   
