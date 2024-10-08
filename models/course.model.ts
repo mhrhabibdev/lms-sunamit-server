@@ -73,7 +73,6 @@ interface ICourse extends Document {
   
   const courseDataSchema = new Schema<ICourseData>({
     videoUrl: String,
-    videoThumbnail: Object, // corrected the typo
     title: String,
     videoSection: String,
     description: String,
@@ -103,11 +102,9 @@ interface ICourse extends Document {
     },
     thumbnail: {
       public_id: {
-        required: true,
         type: String,
       },
       url: {
-        required: true,
         type: String,
       },
     },
