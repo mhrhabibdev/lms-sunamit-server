@@ -4,6 +4,7 @@ import cloudinary from "cloudinary";
 import { createCourse } from "../services/course.service";
 import CourseModel from "../models/course.model";
 import { Stream } from "stream";
+import { redis } from "../utils/redis";
 
 // Upload course
 export const uploadCourse = async (req: Request, res: Response, next: NextFunction) => {
@@ -103,21 +104,40 @@ export const editCourse = async (req: Request, res: Response, next: NextFunction
 
 
 // Get single course without purchasing
-export const getSingleCourse = 
+export const getSingleCourse =
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const course = await CourseModel.findById(req.params.id).select(
-        "-courseData.videoUrl -courseData.suggestion -courseData.questions -courseData.links"
-      );
+      const courseId = req.params.id;
 
-      if (!course) {
-        return next(new ErrorHandler("Course not found", 404));
+      // Check if the course exists in cache
+      const isCacheExist = await redis.get(courseId);
+
+      if (isCacheExist) {
+        // If cache exists, return the cached course
+        const course = JSON.parse(isCacheExist);
+        return res.status(200).json({
+          success: true,
+          course,
+        });
+      } else {
+        // If cache does not exist, fetch the course from the database
+        const course = await CourseModel.findById(courseId).select(
+          "-courseData.videoUrl -courseData.suggestion -courseData.questions -courseData.links"
+        );
+
+        if (!course) {
+          return next(new ErrorHandler("Course not found", 404));
+        }
+
+        // Store the course in cache
+        await redis.set(courseId, JSON.stringify(course));
+
+        // Return the fetched course
+        res.status(200).json({
+          success: true,
+          course,
+        });
       }
-
-      res.status(200).json({
-        success: true,
-        course,
-      });
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 500));
     }
