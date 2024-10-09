@@ -1,14 +1,14 @@
 {
-    "compilerOptions": {
-      "target": "ES2020",
-      "module": "NodeNext",
-      "moduleResolution": "NodeNext",
-      "strict": true,
-      "esModuleInterop": true,
-      "skipLibCheck": true,
-      "forceConsistentCasingInFileNames": true
-    },
-    "include": ["./**/*.ts"],
-    "exclude": ["node_modules"]
-  }
-  
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "typeRoots": ["./node_modules/@types", "./@types"] // Added custom type directory
+  },
+  "include": ["./**/*.ts"],
+  "exclude": ["node_modules"]
+}

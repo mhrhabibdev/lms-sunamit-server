@@ -9,6 +9,7 @@ courseRouter.post(
   "/create-course",
   isAuthenticated,
   authorizeRoles("admin"),
+
   uploadCourse
 );
 
