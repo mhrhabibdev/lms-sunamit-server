@@ -145,17 +145,34 @@ export const getSingleCourse =
 ;
 
 // Get all courses without purchasing
-export const getAllCourses = 
+export const getAllCourses =
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const courses = await CourseModel.find().select(
-        "-courseData.videoUrl -courseData.suggestion -courseData.questions -courseData.links"
-      );
+      // Check if courses are cached
+      const isCacheExist = await redis.get("allCourses");
 
-      res.status(200).json({
-        success: true,
-        courses,
-      });
+      if (isCacheExist) {
+        // If cache exists, return the cached courses
+        const courses = JSON.parse(isCacheExist);
+        return res.status(200).json({
+          success: true,
+          courses,
+        });
+      } else {
+        // If cache does not exist, fetch courses from the database
+        const courses = await CourseModel.find().select(
+          "-courseData.videoUrl -courseData.suggestion -courseData.questions -courseData.links"
+        );
+
+        // Store the courses in cache
+        await redis.set("allCourses", JSON.stringify(courses));
+
+        // Return the fetched courses
+        res.status(200).json({
+          success: true,
+          courses,
+        });
+      }
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 500));
     }
