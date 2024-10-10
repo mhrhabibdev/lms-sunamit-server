@@ -5,6 +5,11 @@ import { createCourse } from "../services/course.service";
 import CourseModel from "../models/course.model";
 import { Stream } from "stream";
 import { redis } from "../utils/redis";
+import { catchAsyncError } from "../middleware/catchAsyncErrors";
+
+
+
+
 
 // Upload course
 export const uploadCourse = async (req: Request, res: Response, next: NextFunction) => {
@@ -145,8 +150,7 @@ export const getSingleCourse =
 ;
 
 // Get all courses without purchasing
-export const getAllCourses =
-  async (req: Request, res: Response, next: NextFunction) => {
+export const getAllCourses =  async (req: Request, res: Response, next: NextFunction) => {
     try {
       // Check if courses are cached
       const isCacheExist = await redis.get("allCourses");
@@ -178,3 +182,43 @@ export const getAllCourses =
     }
   }
 ;
+
+// get course content only for valid user
+export const getCourseByUser = 
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userCourseList = req.user?.courses;
+      const courseId = req.params.id;
+
+      console.log("User Course List:", userCourseList);
+      console.log("Course ID:", courseId);
+
+      const courseExists = userCourseList?.find(
+        (course: any) => course._id.toString() === courseId
+      );
+
+      if (!courseExists) {
+        return next(
+          new ErrorHandler("You are not eligible to access this course", 404)
+        );
+      }
+
+      const courses = await CourseModel.findById(courseId);
+      if (!courses) {
+          return next(new ErrorHandler("Course not found", 404));
+      }
+      const content = courses.courseData;
+      
+      res.status(200).json({
+        success: true,
+        content,
+      });
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 500));
+    }
+  }
+;
+
+
+
+
