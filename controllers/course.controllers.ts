@@ -44,7 +44,7 @@ export const uploadCourse = async (req: Request, res: Response, next: NextFuncti
       bufferStream.pipe(myCloud); // Pipe the buffer to Cloudinary upload stream
     } else {
       // If no thumbnail is uploaded, proceed to create the course without it
-      data.thumbnail = null; // Set thumbnail to null or remove this line if you want to omit it
+      data.thumbnail = null; 
 
       // Create the course without a thumbnail
       await createCourse(data, res);
