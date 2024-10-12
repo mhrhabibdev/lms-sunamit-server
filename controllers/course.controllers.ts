@@ -90,8 +90,8 @@ export const editCourse = async (req: Request, res: Response, next: NextFunction
 
       // Create a stream to upload the thumbnail buffer
       const bufferStream = new Stream.PassThrough();
-      bufferStream.end(thumbnail.buffer); // Use the buffer from multer
-      bufferStream.pipe(myCloud); // Pipe the buffer to Cloudinary upload stream
+      bufferStream.end(thumbnail.buffer); 
+      bufferStream.pipe(myCloud); 
     }
 
     const course = await CourseModel.findByIdAndUpdate(courseId, {
