@@ -1,7 +1,7 @@
 import mongoose, { Document, Model, Schema } from "mongoose";
 
 interface IComment extends Document {
-  user: object;
+  user: ICourse;
   question: string;
   questionReplies?: IComment[];
 }
