@@ -6,6 +6,7 @@ import CourseModel from "../models/course.model";
 import { Stream } from "stream";
 import { redis } from "../utils/redis";
 import { catchAsyncError } from "../middleware/catchAsyncErrors";
+import mongoose from "mongoose";
 
 
 
@@ -219,6 +220,57 @@ export const getCourseByUser =
   }
 ;
 
+
+
+interface IAddQuestionData {
+  question: string;
+  courseId: string;
+  contentId: string;
+}
+
+export const addQuestion = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { question, courseId, contentId }: IAddQuestionData = req.body;
+
+    // Find the course by courseId
+    const courses = await CourseModel.findById(courseId);
+    if (!courses) {
+      return next(new ErrorHandler("Course not found", 404));
+    }
+
+    // Validate contentId
+    if (!mongoose.Types.ObjectId.isValid(contentId)) {
+      return next(new ErrorHandler("Invalid content ID", 400));
+    }
+
+    // Find the specific content in the course
+    const courseContent = courses.courseData?.find((item: any) => item._id.equals(contentId));
+    if (!courseContent) {
+      return next(new ErrorHandler("Content not found", 404));
+    }
+
+    // Create a new question object
+    const newQuestion :any = {
+      user: req.user, // Make sure `req.user` contains the logged-in user
+      question,
+      questionReplies: [], // Empty replies initially
+    };
+
+    // Add the new question to the course content
+    courseContent.questions.push(newQuestion);
+
+    // Save the updated course
+    await courses.save();
+
+    // Send response
+    res.status(200).json({
+      success: true,
+      courses,
+    });
+  } catch (error: any) {
+    return next(new ErrorHandler(error.message, 500));
+  }
+});
 
 
 
