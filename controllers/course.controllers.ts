@@ -228,7 +228,7 @@ interface IAddQuestionData {
   contentId: string;
 }
 
-export const addQuestion = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+export const addQuestion = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { question, courseId, contentId }: IAddQuestionData = req.body;
 
@@ -270,7 +270,7 @@ export const addQuestion = catchAsyncError(async (req: Request, res: Response, n
   } catch (error: any) {
     return next(new ErrorHandler(error.message, 500));
   }
-});
+};
 
 
 

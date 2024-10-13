@@ -2,15 +2,15 @@ import mongoose, { Document, Model, Schema } from "mongoose";
 
 interface IComment extends Document {
   user: object;
-  comment: string;
-  commentReplies?: IComment[];
+  question: string;
+  questionReplies?: IComment[];
 }
 
 interface IReview extends Document {
   user: object;
   rating: number;
-  comment: string;
-  commentReplies: IComment[];
+  question: string;
+  questionReplies: IComment[];
 }
 
 interface ILink extends Document {
@@ -56,7 +56,7 @@ interface ICourse extends Document {
       type: Number,
       default: 0,
     },
-    comment: String,
+    question: String,
   });
   
   // Link schema
@@ -67,8 +67,8 @@ interface ICourse extends Document {
 
   const commentSchema = new Schema<IComment>({
     user: Object,
-    comment: String,
-    commentReplies: [Object]
+    question: String,
+    questionReplies: [Object]
   });
   
   const courseDataSchema = new Schema<ICourseData>({
