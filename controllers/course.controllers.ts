@@ -350,3 +350,68 @@ export const addAnswer = async (req: Request, res: Response, next: NextFunction)
     return next(new ErrorHandler(error.message, 500));
   }
 };
+
+
+// Add review in course
+interface IAddReviewData {
+  review: string;
+  rating: number;
+  userId: string;
+}
+
+export const addReview = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userCourseList = req.user?.courses;
+    const courseId = req.params.id;
+
+    // Check if courseId already exists in userCourseList based on id
+    const courseExists = userCourseList?.some((courses: any) => courses._id.toString() === courseId.toString());
+    if (!courseExists) {
+      return next(new ErrorHandler("You are not eligible to access this course", 404));
+    }
+
+    const courses = await CourseModel.findById(courseId);
+    if (!courses) {
+      return next(new ErrorHandler("Course not found", 404));
+    }
+
+    const { review, rating } = req.body as IAddReviewData;
+
+    const reviewData : any = {
+      user: req.user, // Ensure user object contains relevant user details
+      rating,
+      comment: review,
+    };
+
+    courses.reviews.push(reviewData);
+
+    // Calculate average rating
+    let avg = 0;
+    courses.reviews.forEach((rev: any) => {
+      avg += rev.rating;
+    });
+
+    if (courses) {
+      courses.ratings = avg / courses.reviews.length;
+    }
+
+    await courses.save();
+
+    const notification = {
+      title: "New Review Received",
+      message: `${req.user?.name} has given a review in ${courses.name}`,
+    };
+
+    // Create notification logic (implement if needed)
+    // For now, it's just a console log or some operation
+    console.log(notification);
+
+    res.status(200).json({
+      success: true,
+      courses,
+    });
+  } catch (error: any) {
+    return next(new ErrorHandler(error.message, 500));
+  }
+};
+

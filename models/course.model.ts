@@ -1,4 +1,5 @@
 import mongoose, { Document, Model, Schema } from "mongoose";
+import { IUser } from "./user.model";
 
 interface IComment extends Document {
   user: ICourse;
@@ -7,10 +8,10 @@ interface IComment extends Document {
 }
 
 interface IReview extends Document {
-  user: object;
+  user: IUser;
   rating: number;
-  question: string;
-  questionReplies: IComment[];
+  comment: string;
+  commentReplies: IComment[];
 }
 
 interface ILink extends Document {
@@ -56,7 +57,7 @@ interface ICourse extends Document {
       type: Number,
       default: 0,
     },
-    question: String,
+    comment: String,
   });
   
   // Link schema
