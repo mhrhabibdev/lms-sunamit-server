@@ -377,14 +377,18 @@ export const addReview = async (req: Request, res: Response, next: NextFunction)
 
     const { review, rating } = req.body as IAddReviewData;
 
+    // console.log("100",review)
+
     const reviewData : any = {
       user: req.user, // Ensure user object contains relevant user details
       rating,
       comment: review,
     };
 
-    courses.reviews.push(reviewData);
 
+
+    courses.reviews.push(reviewData);
+// console.log(reviewData);
     // Calculate average rating
     let avg = 0;
     courses.reviews.forEach((rev: any) => {
@@ -404,7 +408,7 @@ export const addReview = async (req: Request, res: Response, next: NextFunction)
 
     // Create notification logic (implement if needed)
     // For now, it's just a console log or some operation
-    console.log(notification);
+    // console.log(notification);
 
     res.status(200).json({
       success: true,
