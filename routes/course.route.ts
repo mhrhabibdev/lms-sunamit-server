@@ -49,8 +49,8 @@ courseRouter.put(
 );
 courseRouter.put(
   "/add-reply",
-  authorizeRoles("admin"),
   isAuthenticated,
+  authorizeRoles("admin"),
   addReplyToReview
 );
 
