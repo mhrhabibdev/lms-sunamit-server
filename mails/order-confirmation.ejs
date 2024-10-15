@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .order-details {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .order-details table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .order-details th, .order-details td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        .order-details th {
+            background-color: #f2f2f2;
+        }
+        .total {
+            font-weight: bold;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Order Confirmation</h1>
+        <p>Thank you for your order!</p>
+
+        <div class="order-details">
+            <h2>Order Details</h2>
+            <table>
+                <tr>
+                    <th>Order ID</th>
+                    <td><%= order._id %></td>
+                </tr>
+                <tr>
+                    <th>Course Name</th>
+                    <td><%= order.name %></td>
+                </tr>
+                <tr>
+                    <th>Price</th>
+                    <td>$<%= order.price.toFixed(2) %></td>
+                </tr>
+                <tr>
+                    <th>Order Date</th>
+                    <td><%= order.date %></td>
+                </tr>
+                <tr>
+                    <th>Subtotal</th>
+                    <td>$<%= order.price.toFixed(2) %></td>
+                </tr>
+                <tr class="total">
+                    <th>Total</th>
+                    <td>$<%= order.price.toFixed(2) %></td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="footer">
+            <p>If you have any questions about your order, feel free to contact us.</p>
+            <p>Thank you for choosing our service!</p>
+        </div>
+    </div>
+</body>
+</html>
