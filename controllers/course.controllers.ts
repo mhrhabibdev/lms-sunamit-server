@@ -447,9 +447,11 @@ export const addReplyToReview =
         user: req.user,
         comment,
       };
-
+      if(!review.commentReplies){
+        review.commentReplies= [];
+      }
     
-      courses.reviews.push(replyData);
+      review.commentReplies.push(replyData);
 
       await courses.save();
 

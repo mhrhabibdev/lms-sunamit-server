@@ -59,6 +59,7 @@ interface ICourse extends Document {
       default: 0,
     },
     comment: String,
+    commentReplies:[Object]
   });
   
   // Link schema
