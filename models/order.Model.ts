@@ -4,7 +4,7 @@ import mongoose, { Document, Model, Schema } from "mongoose";
 export interface IOrder extends Document {
   courseId: string;    // ID of the course
   userId: string;      // ID of the user
-  payment_info: object; // Payment information (can be further specified)
+  payment_info?: object; // Payment information (optional or further specified as needed)
 }
 
 // Create the order schema
