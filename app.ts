@@ -8,6 +8,7 @@ import { ErrorMiddleware } from "./middleware/error";
 import userRouter from "./routes/user.route";
 import courseRouter from "./routes/course.route";
 import orderRouter from "./routes/order.route";
+import notificationRoute from "./routes/notification.route";
 
 
 
@@ -24,7 +25,7 @@ app.use(cors({
 }));
 
 // router 
-app.use("/api/v1",userRouter,courseRouter,orderRouter)
+app.use("/api/v1",userRouter,courseRouter,orderRouter,notificationRoute)
 
 
 // testing API
