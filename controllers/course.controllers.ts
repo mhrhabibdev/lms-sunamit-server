@@ -65,7 +65,7 @@ export const uploadCourse = async (req: Request, res: Response, next: NextFuncti
 export const editCourse = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const courseId = req.params.id; // Get the course ID from params
-    const existingCourse = await CourseModel.findById(courseId); // Fetch the existing course
+    const existingCourse = await CourseModel.findById(courseId); 
 
     if (!existingCourse) {
       return next(new ErrorHandler("Course not found", 404));
