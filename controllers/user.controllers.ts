@@ -10,7 +10,7 @@ import sendMail from "../utils/sendMail";
 import { catchAsyncError } from "../middleware/catchAsyncErrors";
 import { accessTokenOptions, refreshTokenOptions, sendToken } from "../utils/jwt";
 import { redis } from "../utils/redis";
-import { getAllUsersService, getUserById } from "../services/user.services";
+import { getAllUsersService, getUserById, updateUserRoleService } from "../services/user.services";
 import cloudinary from "cloudinary"
 
 // Register User Interface
@@ -427,6 +427,41 @@ export const getAllUsers =
     }
   }
 ;
+
+// update user role only for admin
+export const updateUserRole =
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id, role } = req.body;
+      updateUserRoleService(res, id, role);
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 400));
+    }
+  }
+;
+
+// Delete user -only for admin
+export const deleteUser = 
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const user = await UserModel.findById(id);
+      if (!user) {
+        return next(new ErrorHandler("User not found", 404));
+      }
+      await user.deleteOne({ id });
+      await redis.del(id);
+      res.status(200).json({
+        success: true,
+        message: "User deleted successfully",
+      });
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 400));
+    }
+  }
+;
+
+
 
 
 
