@@ -479,7 +479,7 @@ export const addReplyToReview =
   };
 
   // get all courses -only for admin
-export const getAllUsers = 
+export const getAllCourse = 
 async (req: Request, res: Response, next: NextFunction) => {
   try {
     getAllCoursesService(res);

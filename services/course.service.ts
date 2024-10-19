@@ -14,7 +14,7 @@ export const createCourse = async (data: any, res: Response) => {
 
 
 // Get All course 
-export const getAllCourseService = async (res: Response) => {
+export const getAllCoursesService = async (res: Response) => {
   const courses = await CourseModel.find().sort({ createdAt: 1 });
   res.status(201).json({
     success: true,

@@ -16,3 +16,13 @@ export const newOrder = async (data: any, res: Response, next: NextFunction) => 
     next(error);  // Pass the error to the error handler middleware
   }
 };
+
+// Get All orders
+export const getAllordersService = async (res: Response) => {
+  const orders = await OrderModel.find().sort({ createdAt: 1 });
+  res.status(201).json({
+    success: true,
+    orders,
+  });
+};
+

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import UserModel from "../models/user.model";
 import CourseModel from "../models/course.model";
-import { newOrder } from "../services/order.service";
+import { getAllordersService, newOrder } from "../services/order.service";
 import ErrorHandler from "../utils/ErrorHandler";
 import NotificationModel from "../models/notification.Model";
 
@@ -60,3 +60,14 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
     return next(new ErrorHandler(error.message, 500));
   }
 };
+
+  // get all orders -only for admin
+  export const getAllOrder = 
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      getAllordersService(res);
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 400));
+    }
+  }
+  ;
