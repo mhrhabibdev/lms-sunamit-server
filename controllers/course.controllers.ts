@@ -2,7 +2,7 @@ import { IUser } from './../models/user.model';
 import { NextFunction, Request, Response } from "express";
 import ErrorHandler from "../utils/ErrorHandler";
 import cloudinary from "cloudinary";
-import { createCourse } from "../services/course.service";
+import { createCourse, getAllCoursesService } from "../services/course.service";
 import CourseModel from "../models/course.model";
 import { Stream } from "stream";
 import { redis } from "../utils/redis";
@@ -478,3 +478,13 @@ export const addReplyToReview =
     }
   };
 
+  // get all courses -only for admin
+export const getAllUsers = 
+async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    getAllCoursesService(res);
+  } catch (error: any) {
+    return next(new ErrorHandler(error.message, 400));
+  }
+}
+;

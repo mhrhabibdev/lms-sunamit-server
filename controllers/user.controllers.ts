@@ -10,7 +10,7 @@ import sendMail from "../utils/sendMail";
 import { catchAsyncError } from "../middleware/catchAsyncErrors";
 import { accessTokenOptions, refreshTokenOptions, sendToken } from "../utils/jwt";
 import { redis } from "../utils/redis";
-import { getUserById } from "../services/user.services";
+import { getAllUsersService, getUserById } from "../services/user.services";
 import cloudinary from "cloudinary"
 
 // Register User Interface
@@ -410,6 +410,18 @@ export const  updateProfilePicture  = async (req: Request, res: Response, next: 
           user,
         });
       }
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 400));
+    }
+  }
+;
+
+
+// get all users -only for admin
+export const getAllUsers = 
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      getAllUsersService(res);
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 400));
     }
