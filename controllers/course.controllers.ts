@@ -11,6 +11,7 @@ import mongoose from "mongoose";
 import ejs from "ejs";
 import path from "path";
 import sendMail from "../utils/sendMail";
+import NotificationModel from '../models/notification.Model';
 
 
 
@@ -265,6 +266,13 @@ export const addQuestion = async (req: Request, res: Response, next: NextFunctio
     // Add the new question to the course content
     courseContent.questions.push(newQuestion);
 
+    await NotificationModel.create({
+      user: req.user?._id,
+      title: "New Question",
+      message: `You have a new question in ${courseContent?.title}`,
+    });
+    
+
     // Save the updated course
     await courses.save();
 
@@ -316,12 +324,18 @@ export const addAnswer = async (req: Request, res: Response, next: NextFunction)
     };
 
     // Add this answer to our course content
-    question.questionReplies.push(newAnswer);
+    question.questionReplies?.push(newAnswer);
 
     await courses?.save();
 
     if (req.user?._id === question.user._id) {
       // Create a notification
+      await NotificationModel.create({
+        user: req.user?._id,
+        title: "Question Reply",
+        message: `Your question in ${courseContent?.title} has been replied to.`,
+      });
+      
     } else {
       const data = {
         name: question.user.name,
