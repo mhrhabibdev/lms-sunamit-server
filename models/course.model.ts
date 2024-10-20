@@ -135,7 +135,7 @@ interface ICourse extends Document {
       type: Number,
       default: 0,
     },
-  });
+  },{timestamps:true});
   
   const CourseModel: Model<ICourse> = mongoose.model("Course", courseSchema);
   export default CourseModel;
