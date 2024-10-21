@@ -420,10 +420,6 @@ export const addReview = async (req: Request, res: Response, next: NextFunction)
       message: `${req.user?.name} has given a review in ${courses.name}`,
     };
 
-    // Create notification logic (implement if needed)
-    // For now, it's just a console log or some operation
-    // console.log(notification);
-
     res.status(200).json({
       success: true,
       courses,
