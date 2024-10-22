@@ -34,6 +34,11 @@ export const createLayout =
         const { categories } = req.body;
         await LayoutModel.create(categories);
       }
+      res.status(200).json({
+        success: true,
+        message: "Layout created successfully",
+      });
+        
     } catch (error) {
       return next(new ErrorHandler("Error creating layout", 500));
     }
