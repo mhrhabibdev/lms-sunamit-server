@@ -142,7 +142,7 @@ export const getSingleCourse =
         }
 
         // Store the course in cache
-        await redis.set(courseId, JSON.stringify(course));
+        await redis.set(courseId, JSON.stringify(course),"EX", 604800);
 
         // Return the fetched course
         res.status(200).json({

@@ -25,7 +25,7 @@ export const isAuthenticated = async (req: Request, res: Response, next: NextFun
   
   // Check if the user exists
   if (!user) {
-    return next(new ErrorHandler("User not found", 400));
+    return next(new ErrorHandler("please login to access the recurce", 400));
   }
 
   // Attach user information to the request object

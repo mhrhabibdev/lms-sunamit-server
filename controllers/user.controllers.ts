@@ -190,55 +190,58 @@ export const logoutUser =
   };
 
 
-// update access token
+// Update access token
 export const updateAccessToken = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const refresh_token = req.cookies.refresh_token as string;
 
-    // Verify the refresh token
-    const decoded = jwt.verify(refresh_token, process.env.REFRESH_TOKEN as string) as JwtPayload;
-    const message = 'Could not refresh token';
+    if (!refresh_token) {
+      return next(new ErrorHandler('Refresh token not found', 400));
+    }
 
-    if (!decoded) {
-      return next(new ErrorHandler(message, 400));
+    // Verify the refresh token
+    let decoded: JwtPayload | null = null;
+    try {
+      decoded = jwt.verify(refresh_token, process.env.REFRESH_TOKEN as string) as JwtPayload;
+    } catch (err) {
+      return next(new ErrorHandler('Invalid refresh token', 400));
     }
 
     // Get session from Redis
     const session = await redis.get(decoded.id as string);
     if (!session) {
-      return next(new ErrorHandler(message, 400));
+      return next(new ErrorHandler('plese login to access this recorcres', 400));
     }
 
     const user = JSON.parse(session);
 
+    // Generate new access and refresh tokens
     const accessToken = jwt.sign(
       { id: user._id },
-      process.env.ACCESS_TOKEN as string,  // Use ACCESS_TOKEN_SECRET
-      {
-        expiresIn: "5m",
-      }
-    );
-    
-    const refreshToken = jwt.sign(
-      { id: user._id },
-      process.env.REFRESH_TOKEN as string,  // Use REFRESH_TOKEN_SECRET
-      {
-        expiresIn: "3d",
-      }
+      process.env.ACCESS_TOKEN as string, // Using ACCESS_TOKEN_SECRET
+      { expiresIn: "5m" }
     );
 
-    req.user=user;
-    
+    const refreshToken = jwt.sign(
+      { id: user._id },
+      process.env.REFRESH_TOKEN as string, // Using REFRESH_TOKEN_SECRET
+      { expiresIn: "3d" }
+    );
+
+    req.user = user;
+
     // Set cookies for access token and refresh token
     res.cookie("access_token", accessToken, accessTokenOptions);
     res.cookie("refresh_token", refreshToken, refreshTokenOptions);
-    
+
+    await redis.set(user._id,JSON.stringify(user), "EX", 604800)
+
     // Send success response with access token
     res.status(200).json({
       status: "success",
       accessToken,
     });
-    
+
   } catch (error: any) {
     return next(new ErrorHandler(error.message, 400));
   }

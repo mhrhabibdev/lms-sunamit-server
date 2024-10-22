@@ -13,12 +13,12 @@ interface ITokenOptions {
 
 // Parse environment variables to integrate with fallback values
 const accessTokenExpire = parseInt(process.env.ACCESS_TOKEN_EXPIR || '300', 10);
-const refreshTokenExpire = parseInt(process.env.REFRESH_TOKEN_EXPIRE || '1200', 10); // Fixed variable name
+const refreshTokenExpire = parseInt(process.env.REFRESH_TOKEN_EXPIRE ||  '259200', 10); // Fixed variable name
 
 // Options for cookies
 export const accessTokenOptions: ITokenOptions = {
-  expires: new Date(Date.now() + accessTokenExpire * 60 * 60 * 1000), // Fixed multiplication operator
-  maxAge: accessTokenExpire  * 60 * 60 * 1000, // Fixed multiplication operator
+  expires: new Date(Date.now() + accessTokenExpire * 60 * 1000), // Fixed multiplication operator
+  maxAge: accessTokenExpire  * 60 * 1000, // Fixed multiplication operator
   httpOnly: true,
   sameSite: 'lax',
 //   secure: process.env.NODE_ENV === 'production', // Set secure to true in production
@@ -29,7 +29,7 @@ export const refreshTokenOptions: ITokenOptions = {
   maxAge: refreshTokenExpire * 24 * 60 * 60 * 1000, // Fixed multiplication operator
   httpOnly: true,
   sameSite: 'lax',
-//   secure: process.env.NODE_ENV === 'production', // Set secure to true in production
+  // secure: process.env.NODE_ENV === 'production', // Set secure to true in production
 };
 
 
