@@ -6,7 +6,6 @@ import { createCourse, getAllCoursesService } from "../services/course.service";
 import CourseModel from "../models/course.model";
 import { Stream } from "stream";
 import { redis } from "../utils/redis";
-import { catchAsyncError } from "../middleware/catchAsyncErrors";
 import mongoose from "mongoose";
 import ejs from "ejs";
 import path from "path";
