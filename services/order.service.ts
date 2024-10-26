@@ -9,11 +9,11 @@ export const newOrder = async (data: any, res: Response, next: NextFunction) => 
     
     // Send the response with order details
     res.status(201).json({
-      success: true,    // Fixed typo from "succcess" to "success"
+      success: true,    
       order,
     });
   } catch (error: any) {
-    next(error);  // Pass the error to the error handler middleware
+    next(error);  
   }
 };
 
