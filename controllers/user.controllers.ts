@@ -1,4 +1,3 @@
-
 require("dotenv").config();
 import { Request, Response, NextFunction } from "express";
 import UserModel from "../models/user.model";
@@ -7,12 +6,12 @@ import jwt, { JwtPayload, Secret } from "jsonwebtoken";
 import ejs from "ejs";
 import path from "path";
 import sendMail from "../utils/sendMail";
-import { catchAsyncError } from "../middleware/catchAsyncErrors";
 import { accessTokenOptions, refreshTokenOptions, sendToken } from "../utils/jwt";
 import { redis } from "../utils/redis";
 import { getAllUsersService, getUserById, updateUserRoleService } from "../services/user.services";
 import cloudinary from "cloudinary"
 
+// console.log(process.env.REFRESH_TOKEN)
 // Register User Interface
 interface IRegistrationBody {
   name: string;
