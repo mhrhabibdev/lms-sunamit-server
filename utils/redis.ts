@@ -1,23 +1,19 @@
-import 'dotenv/config';
 import { Redis } from 'ioredis';
+import 'dotenv/config';
 
-const redisClient = () => {
-  if (process.env.REDIS_URI) {
-    console.log(`✅ Redis connected`);
-    return process.env.REDIS_URI;
-  }
-  throw new Error('❌ Redis connection failed');
-};
+const redisUri = process.env.REDIS_URI;
 
-export const redis = new Redis(redisClient(), {
+if (!redisUri) {
+  throw new Error('REDIS_URI is not defined');
+}
+
+export const redis = new Redis(redisUri, {
   maxRetriesPerRequest: null,
   connectTimeout: 10000,
-  reconnectOnError: () => true,
-  retryStrategy: (times) => {
-    return Math.min(times * 100, 2000); // retry every 100ms, max 2s
+  retryStrategy(times) {
+    return Math.min(times * 100, 2000);
   },
 });
 
-redis.on('error', (err) => {
-  console.error('🔴 Redis error:', err.message);
-});
+redis.on('connect', () => console.log('✅ Redis client connected'));
+redis.on('error', (err) => console.error('🔴 Redis error:', err.message));

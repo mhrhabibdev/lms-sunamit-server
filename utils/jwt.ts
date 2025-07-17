@@ -11,57 +11,50 @@ interface ITokenOptions {
   secure?: boolean;
 }
 
-// Parse environment variables to integrate with fallback values
-const accessTokenExpire = parseInt(process.env.ACCESS_TOKEN_EXPIR || '300', 10);
-const refreshTokenExpire = parseInt(process.env.REFRESH_TOKEN_EXPIRE ||  '259200', 10); // Fixed variable name
+// এনভায়রনমেন্ট ভেরিয়েবল পড়া
+const accessTokenExpire = parseInt(process.env.ACCESS_TOKEN_EXPIRE || '15', 10); // 15 minutes
+const refreshTokenExpire = parseInt(process.env.REFRESH_TOKEN_EXPIRE || '7', 10); // 7 days
 
-// Options for cookies
+// কুকি অপশনস
 export const accessTokenOptions: ITokenOptions = {
-  expires: new Date(Date.now() + accessTokenExpire * 60 * 1000), // Fixed multiplication operator
-  maxAge: accessTokenExpire  * 60 * 1000, // Fixed multiplication operator
+  expires: new Date(Date.now() + accessTokenExpire * 60 * 1000),
+  maxAge: accessTokenExpire * 60 * 1000,
   httpOnly: true,
   sameSite: 'lax',
-//   secure: process.env.NODE_ENV === 'production', // Set secure to true in production
+  secure: process.env.NODE_ENV === 'production',
 };
 
 export const refreshTokenOptions: ITokenOptions = {
-  expires: new Date(Date.now() + refreshTokenExpire * 24 * 60 * 60 * 1000), // Fixed multiplication operator
-  maxAge: refreshTokenExpire * 24 * 60 * 60 * 1000, // Fixed multiplication operator
+  expires: new Date(Date.now() + refreshTokenExpire * 24 * 60 * 60 * 1000),
+  maxAge: refreshTokenExpire * 24 * 60 * 60 * 1000,
   httpOnly: true,
   sameSite: 'lax',
-  // secure: process.env.NODE_ENV === 'production', // Set secure to true in production
+  secure: process.env.NODE_ENV === 'production',
 };
 
+export const sendToken = (user: IUser, statusCode: number, res: Response) => {
+  const accessToken = user.SignAccessToken();
+  const refreshToken = user.SignRefreshToken();
 
-  
-  export const sendToken = (user: IUser, statusCode: number, res: Response) => {
-    const accessToken = user.SignAccessToken();
-    const refreshToken = user.SignRefreshToken(); // Fixed variable name
+  // রেডিসে সেশন স্টোর করুন (TTL সহ)
+  const redisExpireTime = refreshTokenExpire * 24 * 60 * 60; // সেকেন্ডে
+  redis.set(String(user._id), JSON.stringify(user), 'EX', redisExpireTime);
 
-    // uplode sassion to redis
-
-    // redis.set(user._id, JSON.stringify(user) as any);
-    // Ensure the user._id is converted to string
-redis.set(String(user._id), JSON.stringify(user));
-
-
-  
-// Only set secure to true in production
-if (process.env.NODE_ENV === 'production') {  // Fixed comparison operator
+  // প্রোডাকশনে সিকিউর কুকি
+  if (process.env.NODE_ENV === 'production') {
     accessTokenOptions.secure = true;
-    refreshTokenOptions.secure = true; // Ensuring refreshToken is also secure in production
+    refreshTokenOptions.secure = true;
   }
-  
-  // Set cookies for access token and refresh token
+
+  // কুকি সেট করুন
   res.cookie("access_token", accessToken, accessTokenOptions);
-  res.cookie("refresh_token", refreshToken, refreshTokenOptions); // Fixed variable name
-  
-  // Send the response with status code and tokens
+  res.cookie("refresh_token", refreshToken, refreshTokenOptions);
+
+  // রেসপন্স পাঠান
   res.status(statusCode).json({
     success: true,
     user,
     accessToken,
-    refreshToken, // Return refresh token in the response if necessary
+    refreshToken,
   });
-  
 };
