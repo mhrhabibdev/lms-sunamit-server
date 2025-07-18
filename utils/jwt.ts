@@ -1,60 +1,55 @@
-require("dotenv").config();
-import { IUser } from "../models/user.model";
+// utils/sendToken.ts
 import { Response } from "express";
+import jwt from "jsonwebtoken";
+import { IUser } from "../models/user.model";
 import { redis } from "./redis";
-
-interface ITokenOptions {
-  expires: Date;
-  maxAge: number;
-  httpOnly: boolean;
-  sameSite: 'lax' | 'strict' | 'none' | undefined;
-  secure?: boolean;
-}
-
-// এনভায়রনমেন্ট ভেরিয়েবল পড়া
-const accessTokenExpire = parseInt(process.env.ACCESS_TOKEN_EXPIRE || '15', 10); // 15 minutes
-const refreshTokenExpire = parseInt(process.env.REFRESH_TOKEN_EXPIRE || '7', 10); // 7 days
-
-// কুকি অপশনস
-export const accessTokenOptions: ITokenOptions = {
-  expires: new Date(Date.now() + accessTokenExpire * 60 * 1000),
-  maxAge: accessTokenExpire * 60 * 1000,
-  httpOnly: true,
-  sameSite: 'lax',
-  secure: process.env.NODE_ENV === 'production',
-};
-
-export const refreshTokenOptions: ITokenOptions = {
-  expires: new Date(Date.now() + refreshTokenExpire * 24 * 60 * 60 * 1000),
-  maxAge: refreshTokenExpire * 24 * 60 * 60 * 1000,
-  httpOnly: true,
-  sameSite: 'lax',
-  secure: process.env.NODE_ENV === 'production',
-};
+import {
+  accessTokenOptions,
+  refreshTokenOptions,
+  convertToSeconds
+} from "./tokenOptions";
 
 export const sendToken = (user: IUser, statusCode: number, res: Response) => {
-  const accessToken = user.SignAccessToken();
-  const refreshToken = user.SignRefreshToken();
+  const accessTokenExpire = process.env.ACCESS_TOKEN_EXPIRE || "15m";
+  const refreshTokenExpire = process.env.REFRESH_TOKEN_EXPIRE || "3d";
 
-  // রেডিসে সেশন স্টোর করুন (TTL সহ)
-  const redisExpireTime = refreshTokenExpire * 24 * 60 * 60; // সেকেন্ডে
-  redis.set(String(user._id), JSON.stringify(user), 'EX', redisExpireTime);
+  const accessToken = jwt.sign(
+    { id: user._id },
+    process.env.ACCESS_TOKEN!,
+    { expiresIn: accessTokenExpire }
+  );
 
-  // প্রোডাকশনে সিকিউর কুকি
-  if (process.env.NODE_ENV === 'production') {
-    accessTokenOptions.secure = true;
-    refreshTokenOptions.secure = true;
-  }
+  const refreshToken = jwt.sign(
+    { id: user._id },
+    process.env.REFRESH_TOKEN!,
+    { expiresIn: refreshTokenExpire }
+  );
 
-  // কুকি সেট করুন
-  res.cookie("access_token", accessToken, accessTokenOptions);
-  res.cookie("refresh_token", refreshToken, refreshTokenOptions);
+  const redisExpireTime = convertToSeconds(refreshTokenExpire);
+  redis.set(user._id.toString(), JSON.stringify(user), 'EX', redisExpireTime);
 
-  // রেসপন্স পাঠান
+  const isProduction = process.env.NODE_ENV === "production";
+
+  res.cookie("access_token", accessToken, {
+    ...accessTokenOptions,
+    secure: isProduction,
+    sameSite: isProduction ? 'strict' : 'lax',
+  });
+
+  res.cookie("refresh_token", refreshToken, {
+    ...refreshTokenOptions,
+    secure: isProduction,
+    sameSite: isProduction ? 'strict' : 'lax',
+  });
+
   res.status(statusCode).json({
     success: true,
     user,
     accessToken,
     refreshToken,
+    expiresIn: {
+      accessToken: convertToSeconds(accessTokenExpire),
+      refreshToken: convertToSeconds(refreshTokenExpire),
+    }
   });
 };

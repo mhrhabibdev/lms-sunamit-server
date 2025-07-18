@@ -1,15 +1,16 @@
 require("dotenv").config();
 import { Request, Response, NextFunction } from "express";
-import UserModel from "../models/user.model";
+import UserModel, { IUser } from "../models/user.model";
 import ErrorHandler from "../utils/ErrorHandler";
 import jwt, { JwtPayload, Secret } from "jsonwebtoken";
 import ejs from "ejs";
 import path from "path";
 import sendMail from "../utils/sendMail";
-import { accessTokenOptions, refreshTokenOptions, sendToken } from "../utils/jwt";
+import {  sendToken } from "../utils/jwt";
 import { redis } from "../utils/redis";
 import { getAllUsersService, getUserById, updateUserRoleService } from "../services/user.services";
 import cloudinary from "cloudinary";
+import { accessTokenOptions, convertToSeconds, refreshTokenOptions } from "../utils/tokenOptions";
 
 
 // Interfaces
@@ -188,51 +189,233 @@ export const logoutUser = async (req: Request, res: Response, next: NextFunction
   }
 };
 
-// Update Access Token
-export const updateAccessToken = async (req: Request, res: Response, next: NextFunction) => {
+export const updateAccessToken = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const refresh_token = req.cookies.refresh_token as string;
-
     if (!refresh_token) {
-      return next(new ErrorHandler("Refresh token not found", 400));
+      return next(new ErrorHandler("রিফ্রেশ টোকেন পাওয়া যায়নি", 401));
     }
 
-    const decoded = jwt.verify(refresh_token, process.env.REFRESH_TOKEN as string) as JwtPayload;
+    const decoded = jwt.verify(
+      refresh_token,
+      process.env.REFRESH_TOKEN!
+    ) as JwtPayload;
 
     const session = await redis.get(decoded.id as string);
     if (!session) {
-      return next(new ErrorHandler("Please login to access this resource", 400));
+      return next(new ErrorHandler("সেশন পাওয়া যায়নি, দয়া করে লগইন করুন", 401));
     }
 
-    const user = JSON.parse(session);
+    const user = JSON.parse(session) as IUser;
+
+    const accessTokenExpire = process.env.ACCESS_TOKEN_EXPIRE || "15m";
+    const refreshTokenExpire = process.env.REFRESH_TOKEN_EXPIRE || "3d";
 
     const accessToken = jwt.sign(
       { id: user._id },
-      process.env.ACCESS_TOKEN as string,
-      { expiresIn: process.env.ACCESS_TOKEN_EXPIRE }
+      process.env.ACCESS_TOKEN!,
+      { expiresIn: accessTokenExpire }
     );
 
     const refreshToken = jwt.sign(
       { id: user._id },
-      process.env.REFRESH_TOKEN as string,
-      { expiresIn: process.env.REFRESH_TOKEN_EXPIRE }
+      process.env.REFRESH_TOKEN!,
+      { expiresIn: refreshTokenExpire }
     );
 
     req.user = user;
 
-    res.cookie("access_token", accessToken, accessTokenOptions);
-    res.cookie("refresh_token", refreshToken, refreshTokenOptions);
+    // console.log(user._id.toString());
 
-    await redis.set(user._id, JSON.stringify(user), "EX", parseInt(process.env.REFRESH_TOKEN_EXPIRE || '604800'));
+    const isProduction = process.env.NODE_ENV === "production";
+
+    res.cookie("access_token", accessToken, {
+      ...accessTokenOptions,
+      secure: isProduction,
+      sameSite: isProduction ? "strict" : "lax",
+    });
+
+    res.cookie("refresh_token", refreshToken, {
+      ...refreshTokenOptions,
+      secure: isProduction,
+      sameSite: isProduction ? "strict" : "lax",
+    });
+
+    const redisExpireSeconds = convertToSeconds(refreshTokenExpire);
+    await redis.set(user._id.toString(), JSON.stringify(user), "EX", redisExpireSeconds);
 
     res.status(200).json({
       success: true,
       accessToken,
+      expiresIn: accessTokenExpire,
     });
+
   } catch (error: any) {
-    return next(new ErrorHandler(error.message, 400));
+    if (error.name === "TokenExpiredError") {
+      return next(new ErrorHandler("রিফ্রেশ টোকেনের মেয়াদ শেষ", 401));
+    }
+    if (error.name === "JsonWebTokenError") {
+      return next(new ErrorHandler("অবৈধ টোকেন", 401));
+    }
+    return next(new ErrorHandler(error.message, 500));
   }
 };
+
+// // এক্সেস টোকেন আপডেট ফাংশন - উন্নত সংস্করণ
+// export const updateAccessToken = async (
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// ) => {
+//   try {
+//     // ১. রিফ্রেশ টোকেন চেক করুন
+//     const refresh_token = req.cookies.refresh_token as string;
+//     if (!refresh_token) {
+//       return next(new ErrorHandler("রিফ্রেশ টোকেন পাওয়া যায়নি", 401)); // 401 Unauthorized
+//     }
+
+//     // ২. টোকেন ভেরিফাই করুন
+//     const decoded = jwt.verify(
+//       refresh_token,
+//       process.env.REFRESH_TOKEN as string
+//     ) as JwtPayload;
+
+//     // ৩. রেডিস থেকে সেশন ডেটা চেক করুন
+//     const session = await redis.get(decoded.id as string);
+//     if (!session) {
+//       return next(
+//         new ErrorHandler("সেশন পাওয়া যায়নি, দয়া করে লগইন করুন", 401)
+//       );
+//     }
+
+//     // ৪. ইউজার ডেটা পার্স করুন
+//     const user = JSON.parse(session) as IUser;
+
+//     // ৫. নতুন টোকেন জেনারেট করুন
+//     const accessTokenExpire = process.env.ACCESS_TOKEN_EXPIRE || "15m";
+//     const refreshTokenExpire = process.env.REFRESH_TOKEN_EXPIRE || "7d";
+
+//     const accessToken = jwt.sign(
+//       { id: user._id },
+//       process.env.ACCESS_TOKEN as string,
+//       { expiresIn: accessTokenExpire }
+//     );
+
+//     const refreshToken = jwt.sign(
+//       { id: user._id },
+//       process.env.REFRESH_TOKEN as string,
+//       { expiresIn: refreshTokenExpire }
+//     );
+
+//     // ৬. রিকোয়েস্টে ইউজার সেট করুন
+//     req.user = user;
+
+//     // ৭. কুকি সেট করুন (সিকিউরিটি সহ)
+//     const isProduction = process.env.NODE_ENV === "production";
+    
+//     res.cookie("access_token", accessToken, {
+//       ...accessTokenOptions,
+//       secure: isProduction,
+//       sameSite: isProduction ? "strict" : "lax",
+//     });
+
+//     res.cookie("refresh_token", refreshToken, {
+//       ...refreshTokenOptions,
+//       secure: isProduction,
+//       sameSite: isProduction ? "strict" : "lax",
+//     });
+
+//     // ৮. রেডিসে সেশন আপডেট করুন (TTL রিফ্রেশ টোকেনের সাথে মিলিয়ে)
+//     const redisExpireSeconds = convertToSeconds(refreshTokenExpire);
+//     await redis.set(
+//       user.id,
+//       JSON.stringify(user),
+//       "EX",
+//       redisExpireSeconds
+//     );
+
+//     // ৯. রেসপন্স পাঠান
+//     res.status(200).json({
+//       success: true,
+//       accessToken,
+//       expiresIn: accessTokenExpire,
+//     });
+
+//   } catch (error: any) {
+//     // ১০. এরর হ্যান্ডেলিং
+//     if (error.name === "TokenExpiredError") {
+//       return next(new ErrorHandler("রিফ্রেশ টোকেনের মেয়াদ শেষ", 401));
+//     }
+//     if (error.name === "JsonWebTokenError") {
+//       return next(new ErrorHandler("অবৈধ টোকেন", 401));
+//     }
+//     return next(new ErrorHandler(error.message, 500)); // 500 Internal Server Error
+//   }
+// };
+
+// // হেল্পার ফাংশন: টাইম স্ট্রিংকে সেকেন্ডে কনভার্ট করতে
+// const convertToSeconds = (timeString: string): number => {
+//   const unit = timeString.slice(-1);
+//   const value = parseInt(timeString.slice(0, -1));
+
+//   switch (unit) {
+//     case "s": return value; // সেকেন্ড
+//     case "m": return value * 60; // মিনিট
+//     case "h": return value * 60 * 60; // ঘণ্টা
+//     case "d": return value * 24 * 60 * 60; // দিন
+//     default: return 604800; // ডিফল্ট 7 দিন (সেকেন্ডে)
+//   }
+// };
+
+// // Update Access Token
+// export const updateAccessToken = async (req: Request, res: Response, next: NextFunction) => {
+//   try {
+//     const refresh_token = req.cookies.refresh_token as string;
+
+//     if (!refresh_token) {
+//       return next(new ErrorHandler("Refresh token not found", 400));
+//     }
+
+//     const decoded = jwt.verify(refresh_token, process.env.REFRESH_TOKEN as string) as JwtPayload;
+
+//     const session = await redis.get(decoded.id as string);
+//     if (!session) {
+//       return next(new ErrorHandler("Please login to access this resource", 400));
+//     }
+
+//     const user = JSON.parse(session);
+
+//     const accessToken = jwt.sign(
+//       { id: user._id },
+//       process.env.ACCESS_TOKEN as string,
+//       { expiresIn: process.env.ACCESS_TOKEN_EXPIRE }
+//     );
+
+//     const refreshToken = jwt.sign(
+//       { id: user._id },
+//       process.env.REFRESH_TOKEN as string,
+//       { expiresIn: process.env.REFRESH_TOKEN_EXPIRE }
+//     );
+
+//     req.user = user;
+
+//     res.cookie("access_token", accessToken, accessTokenOptions);
+//     res.cookie("refresh_token", refreshToken, refreshTokenOptions);
+
+//     await redis.set(user._id, JSON.stringify(user), "EX", parseInt(process.env.REFRESH_TOKEN_EXPIRE || '604800'));
+
+//     res.status(200).json({
+//       success: true,
+//       accessToken,
+//     });
+//   } catch (error: any) {
+//     return next(new ErrorHandler(error.message, 400));
+//   }
+// };
 
 // Get User Info
 export const getUserInfo = async (req: Request, res: Response, next: NextFunction) => {
@@ -325,7 +508,7 @@ export const updatePassword = async (req: Request, res: Response, next: NextFunc
 };
 
 
-
+// Update Profile Picture
 export const updateProfilePicture = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const file = req.file;

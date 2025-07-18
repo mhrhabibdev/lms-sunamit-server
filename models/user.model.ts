@@ -8,6 +8,7 @@ const emailRegexPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
 // IUser interface extending Document
 export interface IUser extends Document {
+  _id: string; // Mongoose ObjectId
   name: string;
   email: string;
   password: string;
